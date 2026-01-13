@@ -1,21 +1,19 @@
-from flask import Flask, request, redirect, make_response
+from flask import Flask, request, make_response, send_file
 from datetime import datetime
-from zoneinfo import ZoneInfo  # Python 3.9+
+from zoneinfo import ZoneInfo
 import uuid
 import os
 
 app = Flask(__name__)
 
-# Spotify redirect link
-TARGET_URL = "https://open.spotify.com/user/22q4tinbfp6um4otx355523dq?si=a9fbfe58c82c4aa3"
+# New web page file
+WEBPAGE_FILE = os.path.join(os.path.dirname(__file__), "webpage.html")
 
-# Absolute path to log file
 LOG_FILE = os.path.join(os.path.dirname(__file__), "clicks.log")
 
 # Function to log visitor info
 def log_click(visitor_id):
     try:
-        # Malaysia time
         malaysia_time = datetime.utcnow().replace(tzinfo=ZoneInfo("UTC")).astimezone(ZoneInfo("Asia/Kuala_Lumpur"))
         time_str = malaysia_time.strftime("%Y-%m-%d %H:%M:%S")
 
@@ -24,24 +22,23 @@ def log_click(visitor_id):
 
         with open(LOG_FILE, "a") as f:
             f.write(f"{time_str} | {visitor_id} | {ip} | {ua}\n")
-            f.flush()  # <- ensures immediate write
+            f.flush()
 
         print(f"[LOG] {time_str} | {visitor_id} | {ip} | {ua}")
 
     except Exception as e:
         print(f"[ERROR] Logging failed: {e}")
 
-# Main tracking route
+# Main route serving your web page
 @app.route("/")
 def track():
     visitor_id = request.cookies.get("visitor_id")
-
     if not visitor_id:
         visitor_id = str(uuid.uuid4())
 
     log_click(visitor_id)
 
-    response = make_response(redirect(TARGET_URL))
+    response = make_response(send_file(WEBPAGE_FILE))
     response.set_cookie(
         "visitor_id",
         visitor_id,
@@ -51,7 +48,7 @@ def track():
     )
     return response
 
-# Stats route to see detailed click info with total clicks per visitor
+# Stats page
 @app.route("/stats")
 def stats():
     if not os.path.exists(LOG_FILE):
@@ -68,12 +65,7 @@ def stats():
                 time, visitor_id, ip, ua = [p.strip() for p in parts]
                 total_clicks += 1
                 visitor_counts[visitor_id] = visitor_counts.get(visitor_id, 0) + 1
-                log_entries.append({
-                    "time": time,
-                    "visitor_id": visitor_id,
-                    "ip": ip,
-                    "ua": ua
-                })
+                log_entries.append({"time": time, "visitor_id": visitor_id, "ip": ip, "ua": ua})
 
     unique_visitors = len(visitor_counts)
     log_entries.reverse()
