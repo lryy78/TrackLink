@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}{{ table_name }} - {{ db_name }}{% endblock %}
+
+{% block content %}
+<h2 style="text-align:center; margin-bottom:20px;">Table: {{ table_name }} ({{ db_name }})</h2>
+
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                {% for col in columns %}
+                <th>{{ col }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in rows %}
+            <tr>
+                {% for col in columns %}
+                <td>{{ row[col] }}</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div style="text-align:center; margin-top:20px;">
+    <a class="back-btn" href="{{ url_for('admin.dashboard') }}">← Back to Dashboard</a>
+</div>
+
+<style>
+.table-container {
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0 auto;
+    font-family: Arial, sans-serif;
+    background: rgba(255,255,255,0.05);
+}
+
+th, td {
+    padding: 10px;
+    border: 1px solid rgba(255,255,255,0.3);
+    text-align: left;
+}
+
+th {
+    background-color: rgba(0,210,255,0.2);
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+
+tbody tr:nth-child(even) {
+    background-color: rgba(255,255,255,0.03);
+}
+
+tbody tr:hover {
+    background-color: rgba(0,210,255,0.1);
+}
+
+.back-btn {
+    text-decoration: none;
+    font-weight: bold;
+    color: #00d2ff;
+}
+
+.back-btn:hover {
+    text-decoration: underline;
+}
+</style>
+{% endblock %}

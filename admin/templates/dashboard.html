@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<h1 style="text-align:center; margin-bottom:30px;">Admin Dashboard</h1>
+
+<div class="db-section">
+    <h2>Chat DB Tables</h2>
+    <div class="table-cards">
+        {% for t in chat_tables %}
+        <div class="card">
+            <a href="{{ url_for('admin.view_table', db_name='chat', table_name=t) }}">
+                {{ t }}
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="db-section">
+    <h2>Activity DB Tables</h2>
+    <div class="table-cards">
+        {% for t in activity_tables %}
+        <div class="card">
+            <a href="{{ url_for('admin.view_table', db_name='activity', table_name=t) }}">
+                {{ t }}
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div style="text-align:center; margin-top:40px;">
+    <a class="logout" href="{{ url_for('admin.admin_logout') }}">Logout</a>
+</div>
+
+<style>
+h1, h2 { color:#00d2ff; text-align:center; }
+
+.db-section {
+    margin: 30px 0;
+}
+
+.table-cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+}
+
+.card {
+    background: rgba(255,255,255,0.05);
+    border-radius: 12px;
+    padding: 20px 30px;
+    min-width: 150px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 1.1rem;
+    transition: 0.3s;
+    cursor: pointer;
+}
+
+.card a {
+    color: #00d2ff;
+    text-decoration: none;
+}
+
+.card:hover {
+    background: rgba(0,210,255,0.1);
+    transform: scale(1.05);
+}
+
+a.logout {
+    font-weight: bold;
+    color: #ff4d4d;
+    font-size: 1.1rem;
+    text-decoration: none;
+}
+
+a.logout:hover {
+    text-decoration: underline;
+}
+</style>
+{% endblock %}

@@ -1,17 +1,21 @@
+# main.py
+import os
 from flask import Flask
-from db import init_db
-from landing.routes import landing_bp
+from admin.routes import admin_bp
+from landing.routes import landing_bp  # no circular import
+from landing.utils import log_visit  # optional
 
-app = Flask(__name__)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+TEMPLATE_DIR = os.path.join(BASE_DIR, "landing", "templates")
 
-# Init database once
-init_db()
+app = Flask(__name__, template_folder=TEMPLATE_DIR)
+app.secret_key = "SuperSecretSessionKey"
 
-# Register landing blueprint
-app.register_blueprint(landing_bp)
+# ---------------- Register Blueprints ----------------
+app.register_blueprint(admin_bp)
+app.register_blueprint(landing_bp, url_prefix="/")  # "/" prefix
 
-# Main app routes (login, dashboard, etc)
-# are handled in app.py separately
-
+# ---------------- Run App ----------------
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=True)

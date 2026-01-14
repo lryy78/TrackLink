@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Admin Login</title>
+<style>
+body { font-family: sans-serif; background: #020b1a; color: #fff; display:flex; justify-content:center; align-items:center; height:100vh; }
+form { background: rgba(255,255,255,0.1); padding: 40px; border-radius: 12px; text-align:center; }
+input { padding: 10px; margin: 10px 0; width: 100%; border-radius:5px; border:none; }
+button { padding: 10px 20px; background: #00d2ff; border:none; border-radius:5px; color:#000; font-weight:bold; cursor:pointer; }
+.error { color:red; }
+</style>
+</head>
+<body>
+<form method="post">
+    <h2>Admin Login</h2>
+    {% if error %}<p class="error">{{ error }}</p>{% endif %}
+    <input type="password" name="secret_key" placeholder="Enter secret key">
+    <button type="submit">Login</button>
+</form>
+</body>
+</html>

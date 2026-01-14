@@ -20,10 +20,10 @@
     {% if bottle.file_path %}
         {% if bottle.file_path.endswith('.mp4') or bottle.file_path.endswith('.webm') %}
             <video controls>
-                <source src="{{ url_for('uploaded_file', filename=bottle.file_path) }}">
+                <source src="{{ url_for('chat.uploaded_file', filename=bottle.file_path) }}">
             </video>
         {% else %}
-            <img src="{{ url_for('uploaded_file', filename=bottle.file_path) }}">
+            <img src="{{ url_for('chat.uploaded_file', filename=bottle.file_path) }}">
         {% endif %}
     {% endif %}
 </div>

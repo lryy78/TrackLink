@@ -130,15 +130,77 @@
         .subtitle { font-size: 1rem; }
         .time { font-size: 2.8rem; }
     }
+
+    /* ---------- VERIFY OVERLAY ---------- */
+    #verify-overlay {
+        position: fixed;
+        inset: 0;
+        background: radial-gradient(circle at top, #0a1f44, #020b1a);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+    }
+
+    .verify-box {
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.15);
+        backdrop-filter: blur(20px);
+        padding: 30px;
+        border-radius: 20px;
+        width: 300px;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+    }
+
+    .verify-box input {
+        width: 100%;
+        padding: 10px;
+        border-radius: 10px;
+        border: none;
+        margin-top: 15px;
+        text-align: center;
+    }
+
+    .verify-box button {
+        width: 100%;
+        margin-top: 15px;
+        padding: 10px;
+        border-radius: 12px;
+        border: none;
+        font-weight: 600;
+        cursor: pointer;
+        background: var(--accent-blue);
+    }
+
+    #error-text {
+        color: #ff6b6b;
+        font-size: 0.85rem;
+        display: none;
+        margin-top: 10px;
+    }
 </style>
 </head>
 <body>
+    <!-- 🔒 VERIFY OVERLAY -->
+    <div id="verify-overlay">
+        <div class="verify-box">
+            <h2>Verify Birthday</h2>
+            <p style="opacity:.7;font-size:.9rem">Enter to unlock greeting</p>
+
+            <form id="birthday-form" method="POST">
+                <input id="birthday-input" name="birthday" type="password" placeholder="YYMMDD">
+                <button type="submit">Unlock</button>
+            </form>
+
+            <div id="error-text" {% if error %}style="display:block;"{% endif %}>{{ error if error else "" }}</div>
+        </div>
+    </div>
+
 
     <h1>Something is forming</h1>
 
     <div class="subtitle">
-        You weren’t meant to arrive yet.<br>
-        But since you’re here… maybe stay a moment.
+        hehe hellu..?<br>
     </div>
 
     <div class="timer-container">
@@ -155,6 +217,12 @@
     </div>
 
 <script>
+    window.addEventListener("load", () => {
+        {% if birthday_verified %}
+            document.getElementById("verify-overlay").style.display = "none";
+        {% endif %}
+    });
+
 function updateMalaysiaTime() {
     const now = new Date();
     const utc = now.getTime() + now.getTimezoneOffset() * 60000;
@@ -171,33 +239,33 @@ function updateMalaysiaTime() {
     let greeting = "";
 
     if (hours === 6 || hours === 7) {
-        greeting = "Good morning! Hope you slept well and enjoy your breakfast.";
+        greeting = "Good morning aaa!! Hope you slept well!!🌞";
     } else if (hours === 8) {
-        greeting = "Morning focus! 上班要加油!";
+        greeting = "Enjoy your breakfast~~ 上班加油!!😺";
     } else if (hours >= 9 && hours < 11) {
-        greeting = "Morning productivity! Jiayouuu!";
+        greeting = "Ooo 摸鱼一下下hehe Jiayouuu!🐠 ";
     } else if (hours === 11) {
-        greeting = "再坚持一下下, then can eat lunch liaooo!";
+        greeting = "再坚持一下下, then can eat lunch liaooo!!🤤";
     } else if (hours >= 12 && hours < 14) {
-        greeting = "Enjoy your meal! Take a short break or nap luu";
+        greeting = "Enjoy your meal!! Then maybe take a short break or nap luu😪";
     } else if (hours >= 14 && hours < 16) {
-        greeting = "Eat liao, rest liaoo! 上班加油!";
+        greeting = "Eat liao, rest liaoo! 上班加油luu!😄";
     } else if (hours === 16) {
-        greeting = "再坚持一下下, then can off work luu!";
+        greeting = "再坚持一下下, then can off work luu!😆";
     } else if (hours === 17 || (hours === 18 && minutes <= 20)) {
-        greeting = "Yayyy off work luu! 路上小心, 不要被挤扁了!";
+        greeting = "Yayyy!! off work luu! 路上小心, 不要被挤扁了 hehe!😬";
     } else if (hours === 18 && minutes > 20 && hours < 19 || (hours === 19 && minutes <= 30)) {
-        greeting = "Enjoy dinner!! Eat more!";
+        greeting = "Enjoy ur dinner lu!! Eat more!😋";
     } else if ((hours === 19 && minutes > 30) || (hours >= 20 && hours < 21)) {
-        greeting = "Have fun! Exercise or enjoy your me-time!";
+        greeting = "Have fun in exercise or enjoy your me-time!😌";
     } else if (hours === 21 || (hours === 22 && minutes <= 0)) {
-        greeting = "Need to prepare to rest / get into bed!";
+        greeting = "Aaa need to prepare to get into bed liaoo! you almost feel tired liao der🥱";
     } else if (hours === 22 && minutes > 0 && minutes <= 30) {
-        greeting = "Late liao! Go rest, don't play phone dy!";
+        greeting = "Late liaoo! Go rest, don't play phone dy heh!😛";
     } else if ((hours === 22 && minutes > 30) || (hours === 23 && minutes <= 59)) {
-        greeting = "Good night! Rest well!";
+        greeting = "Good night!! Rest well! 😴";
     } else {
-        greeting = "Sweet dreams! Sleep well until morning!";
+        greeting = "Sweet dreams!🌛 Sleep well until morning! Don't wake in the middle of the night luu!!";
     }
 
     document.getElementById('greeting-text').textContent = greeting;

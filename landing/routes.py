@@ -1,6 +1,8 @@
+# landing/routes.py
 from flask import Blueprint, render_template, request
-from activity_logger import log_visit
-from activity_service import get_live_count, get_last_visitor
+from landing.utils import log_visit
+
+ALLOWED_BIRTHDAYS = ["030605", "ry5678"]
 
 landing_bp = Blueprint(
     "landing",
@@ -8,15 +10,25 @@ landing_bp = Blueprint(
     template_folder="templates"
 )
 
-@landing_bp.route("/")
+@landing_bp.route("/", methods=["GET", "POST"])
 def landing():
-    log_visit(request, "landing")
+    birthday_verified = False
+    error = None
 
-    live_count = get_live_count()
-    last_visitor = get_last_visitor()
+    if request.method == "POST":
+        birthday = request.form.get("birthday", "").strip()
+        if birthday in ALLOWED_BIRTHDAYS:
+            birthday_verified = True
+            log_visit("landing-birthday-unlocked")
+        else:
+            error = "Invalid birthday"
+            log_visit(f"landing-birthday-failed-{birthday}")  # fixed: only one argument
+    
+    if request.method == "GET":
+        log_visit("landing")
 
     return render_template(
         "landing.html",
-        live_count=live_count,
-        last_visitor=last_visitor
+        birthday_verified=birthday_verified,
+        error=error
     )

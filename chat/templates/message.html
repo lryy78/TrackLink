@@ -24,14 +24,14 @@
     {% if m['file_path'] %}
         {% if m['file_path'].endswith('.mp4') or m['file_path'].endswith('.webm') or m['file_path'].endswith('.mov') %}
             <video controls>
-                <source src="{{ url_for('uploaded_file', filename=m['file_path']) }}">
+                <source src="{{ url_for('chat.uploaded_file', filename=m['file_path']) }}">
             </video>
         {% else %}
-            <img src="{{ url_for('uploaded_file', filename=m['file_path']) }}">
+            <img src="{{ url_for('chat.uploaded_file', filename=m['file_path']) }}">
         {% endif %}
     {% endif %}
     {% if m['display_name']==name %}
-    <form method="post" action="/delete_message" class="delete-btn">
+    <form method="post" action="{{ url_for('chat.delete_message') }}" class="delete-btn">
         <input type="hidden" name="id" value="{{ m['id'] }}">
         <button type="submit">Delete</button>
     </form>
