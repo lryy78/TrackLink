@@ -1,29 +1,71 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>{% block title %}Admin{% endblock %}</title>
-<style>
-body { font-family: Arial, sans-serif; background-color:#020b1a; color:#fff; margin:0; padding:0; }
-header { padding:20px; text-align:center; background-color:#0a1f44; font-size:1.5rem; font-weight:bold; }
-main { padding:20px; max-width:1200px; margin:0 auto; }
-.row { display:flex; flex-wrap:wrap; gap:20px; justify-content:center; }
-.col { flex:1; min-width:200px; max-width:300px; }
-.card { background: rgba(255,255,255,0.05); padding:20px; border-radius:12px; text-align:center; cursor:pointer; transition:0.3s; }
-.card:hover { background: rgba(0,210,255,0.1); transform: scale(1.05); }
-a { color: inherit; text-decoration:none; }
-table { width:100%; border-collapse:collapse; margin-top:20px; }
-th, td { border:1px solid rgba(255,255,255,0.3); padding:8px; text-align:left; }
-th { background-color: rgba(255,255,255,0.1); }
-a.logout { display:inline-block; margin-top:20px; color:#00d2ff; font-weight:bold; }
-form { background: rgba(255,255,255,0.1); padding:40px; border-radius:12px; max-width:400px; margin:0 auto; }
-input { padding:10px; margin:10px 0; width:100%; border-radius:5px; border:none; }
-button { padding:10px 20px; background:#00d2ff; border:none; border-radius:5px; color:#000; font-weight:bold; cursor:pointer; }
-.error { color:red; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin Dashboard{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #020b1a;
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --accent: #00d2ff;
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background: radial-gradient(circle at top, #0a1f44, #020b1a); 
+            color: #fff; 
+            margin: 0; 
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        header { 
+            padding: 30px; 
+            text-align: center; 
+            background: rgba(10, 31, 68, 0.5); 
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            font-size: 1.2rem; 
+            font-weight: 800;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--accent);
+        }
+
+        main { padding: 40px 20px; max-width: 1200px; margin: 0 auto; }
+
+        nav { text-align: center; margin-bottom: 30px; }
+        nav a { 
+            color: rgba(255,255,255,0.6); 
+            text-decoration: none; 
+            margin: 0 15px; 
+            font-size: 0.9rem;
+            transition: 0.3s;
+        }
+        nav a:hover { color: var(--accent); }
+
+        .btn-back {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: var(--accent);
+            text-decoration: none;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+    </style>
 </head>
 <body>
-<header>{% block header %}Admin{% endblock %}</header>
-<main>{% block content %}{% endblock %}</main>
+    <header>{% block header %}87WEB ADMIN{% endblock %}</header>
+    <nav>
+        <a href="/admin/dashboard">Dashboard</a>
+        <!-- <a href="/admin/messages">Manage Messages</a> -->
+        <a href="/logout" style="color: #ff8080;">Logout</a>
+    </nav>
+    <main>
+        {% block content %}{% endblock %}
+    </main>
 </body>
 </html>

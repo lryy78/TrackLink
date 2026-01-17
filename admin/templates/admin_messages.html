@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+{% block title %}Manage Messages{% endblock %}
+
+{% block content %}
+<style>
+    .admin-container { max-width: 950px; margin: 0 auto; padding: 20px; }
+    
+    .header-flex {
+        display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;
+    }
+
+    /* --- SEARCH & FILTER BAR --- */
+    .controls-row {
+        display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;
+    }
+
+    .search-input, .filter-select {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        padding: 8px 15px;
+        color: white;
+        font-size: 0.85rem;
+        outline: none;
+    }
+    .search-input { flex: 1; min-width: 200px; }
+    .filter-select { cursor: pointer; }
+    .filter-select option { background: #0f172a; }
+
+    .glass-card {
+        background: #0f172a;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 24px;
+        overflow: hidden;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    }
+
+    /* Column layout */
+    .msg-item {
+        display: grid;
+        grid-template-columns: 100px 120px 1fr 120px;
+        align-items: center;
+        padding: 15px 20px;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+        transition: 0.2s;
+    }
+    .msg-item:last-child { border-bottom: none; }
+
+    /* Sorting Header */
+    .sort-header {
+        background: rgba(255,255,255,0.03);
+        font-weight: 800;
+        font-size: 0.65rem;
+        letter-spacing: 1px;
+        color: rgba(255,255,255,0.4);
+        text-transform: uppercase;
+    }
+
+    .badge {
+        font-size: 0.65rem; font-weight: 800; padding: 4px 8px; border-radius: 6px; text-transform: uppercase;
+    }
+    .badge-greeting { background: rgba(56, 189, 248, 0.2); color: #38bdf8; }
+    .badge-ps { background: rgba(168, 85, 247, 0.2); color: #a855f7; }
+
+    .time-text { font-size: 0.85rem; color: rgba(255,255,255,0.5); font-family: monospace; }
+    .content-text { color: white; font-size: 0.95rem; }
+
+    .btn-create {
+        background: #3b82f6; color: white; text-decoration: none;
+        padding: 10px 20px; border-radius: 12px; font-weight: 700; font-size: 0.9rem;
+    }
+
+    .status-toggle {
+        display: inline-flex; align-items: center; text-decoration: none;
+        font-weight: 700; font-size: 0.75rem; padding: 6px 12px; border-radius: 8px;
+    }
+    .status-active { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
+    .status-inactive { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+    
+    .action-btn { color: rgba(255,255,255,0.2); text-decoration: none; margin-left: 10px; transition: 0.2s; }
+    .action-btn:hover { color: #f87171; }
+</style>
+
+<div class="admin-container">
+    <div class="header-flex">
+        <h2 style="font-weight: 800; margin: 0;">Landing Messages</h2>
+        <a href="{{ url_for('admin.create_message') }}" class="btn-create">+ New Message</a>
+    </div>
+
+    <div class="controls-row">
+        <input type="text" id="searchInput" class="search-input" placeholder="Search message content...">
+        
+        <select id="typeFilter" class="filter-select">
+            <option value="all">All Types</option>
+            <option value="greeting">Greetings</option>
+            <option value="ps">PS Footnotes</option>
+        </select>
+
+        <select id="statusFilter" class="filter-select">
+            <option value="all">All Status</option>
+            <option value="active">Active</option>
+            <option value="disabled">Disabled</option>
+        </select>
+
+        <select id="sortBy" class="filter-select">
+            <option value="time">Sort: Time</option>
+            <option value="type">Sort: Type</option>
+            <option value="content">Sort: Content</option>
+        </select>
+    </div>
+
+    <div class="glass-card">
+        <div class="msg-item sort-header">
+            <div>Type</div>
+            <div>Time</div>
+            <div>Content</div>
+            <div style="text-align: right;">Status</div>
+        </div>
+
+        <div id="messageList">
+            {% for m in messages %}
+            <div class="msg-item message-row" 
+                 data-type="{{ m.message_type }}" 
+                 data-time="{{ m.start_time }}" 
+                 data-status="{{ 'active' if m.active else 'disabled' }}"
+                 data-content="{{ m.content | lower }}">
+                
+                <div>
+                    <span class="badge {% if m.message_type == 'greeting' %}badge-greeting{% else %}badge-ps{% endif %}">
+                        {{ m.message_type }}
+                    </span>
+                </div>
+                <div class="time-text">{{ m.start_time }} - {{ m.end_time }}</div>
+                <div class="content-text">{{ m.content }}</div>
+                <div style="text-align: right; display: flex; align-items: center; justify-content: flex-end;">
+                    <a href="{{ url_for('admin.toggle_message', msg_id=m.id) }}" 
+                       class="status-toggle {% if m.active %}status-active{% else %}status-inactive{% endif %}">
+                        {{ "ACTIVE" if m.active else "DISABLED" }}
+                    </a>
+                    <a href="{{ url_for('admin.delete_ui_message', msg_id=m.id) }}" 
+                       class="action-btn" onclick="return confirm('Delete this message?')">✕</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<script>
+    const searchInput = document.getElementById('searchInput');
+    const typeFilter = document.getElementById('typeFilter');
+    const statusFilter = document.getElementById('statusFilter');
+    const sortBy = document.getElementById('sortBy');
+    const messageList = document.getElementById('messageList');
+    const rows = Array.from(document.getElementsByClassName('message-row'));
+
+    function filterAndSort() {
+        const query = searchInput.value.toLowerCase();
+        const type = typeFilter.value;
+        const status = statusFilter.value;
+        const sortVal = sortBy.value;
+
+        // 1. Filtering Logic
+        rows.forEach(row => {
+            const matchesSearch = row.getAttribute('data-content').includes(query);
+            const matchesType = type === 'all' || row.getAttribute('data-type') === type;
+            const matchesStatus = status === 'all' || row.getAttribute('data-status') === status;
+
+            if (matchesSearch && matchesType && matchesStatus) {
+                row.style.display = 'grid';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        // 2. Sorting Logic
+        const sortedRows = rows.sort((a, b) => {
+            let valA = a.getAttribute(`data-${sortVal}`);
+            let valB = b.getAttribute(`data-${sortVal}`);
+            return valA.localeCompare(valB);
+        });
+
+        // Re-append sorted rows
+        sortedRows.forEach(row => messageList.appendChild(row));
+    }
+
+    // Listeners
+    [searchInput, typeFilter, statusFilter, sortBy].forEach(el => {
+        el.addEventListener('input', filterAndSort);
+    });
+</script>
+{% endblock %}

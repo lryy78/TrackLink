@@ -30,6 +30,29 @@
     </div>
 </div>
 
+<div class="db-section">
+    <h2>UI Messages Table</h2>
+    <div class="table-cards">
+        {% for t in ui_tables %}
+        <div class="card">
+            <a href="{{ url_for('admin.view_table', db_name='chat', table_name=t) }}">
+                {{ t }}
+            </a>
+        </div>
+        {% endfor %}
+        <!-- New card for creating messages -->
+        <div class="card">
+            <a href="{{ url_for('admin.create_message') }}">+ Create New Message</a>
+        </div>
+
+        <div class="card">
+            <a href="{{ url_for('admin.admin_messages') }}">Manage Message</a>
+        </div>
+    </div>
+</div>
+
+
+
 <div style="text-align:center; margin-top:40px;">
     <a class="logout" href="{{ url_for('admin.admin_logout') }}">Logout</a>
 </div>

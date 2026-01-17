@@ -378,12 +378,14 @@
             </div>
         </div>
         
-        <div class="greeting" id="greeting-text">Loading...</div>
+        <div class="greeting" id="greeting-text">{{ greeting_text }}</div>
 
         <div class="ps-container">
             <span class="ps-label">ps.</span> 
-            haha, dk when will update on it.🫨 
+            {{ ps_text }}
         </div>
+
+
     </div>
 
     <div class="developing-container">
@@ -478,29 +480,42 @@
 
         const hours = malaysiaTime.getHours();
         const minutes = malaysiaTime.getMinutes();
-        let greeting = "";
+        // let greeting = "";
 
-        // if (hours >= 6 && hours < 8) greeting = "Good morning aaa!! Hope you slept well!!🌞";
-        // else if (hours === 8) greeting = "Enjoy your breakfast luu~~ 上班加油!!😺";
-        // else if (hours >= 9 && hours < 11) greeting = "Ooo 抓到在摸鱼了 hehe! Jiayouuu!🐠";
-        // else if (hours === 11) greeting = "再坚持一下下, can eat lunch liaooo!!🤤";
-        // else if (hours >= 12 && hours < 14) greeting = "Enjoy your meal!! Take a short nap luu😪";
-        // else if (hours >= 14 && hours < 16) greeting = "Eat liao, rest liaoo! 上班加油luu!😄";
-        // else if (hours === 16) greeting = "再坚持一下下, almost off work!😆";
-        // else if (hours === 17 || (hours === 18 && minutes <= 20)) greeting = "Yayyy!! off work luu! 路上小心!😬";
-        // else if (hours >= 18 && hours < 20) greeting = "Enjoy ur dinner lu!! Eat more!😋";
-        // else if (hours >= 20 && hours < 21) greeting = "Enjoy your me-time!😌";
-        // else if (hours >= 21 && hours < 22) greeting = "Need to prepare for bed liaoo!🥱";
-        // else if (hours === 22 && minutes <= 30) greeting = "Late liaoo! Don't play phone dy heh!😛";
-        // else if (hours > 22 || hours < 6) greeting = "Good night!! Sweet dreams!🌛 Rest well! 😴";
-        if (hours >= 1 && hours < 23) greeting = "nothing here yet.. come back later..?🫣";
-        else greeting = "nothing here yet.. come back later..?🫣";
+        // // if (hours >= 6 && hours < 8) greeting = "Good morning aaa!! Hope you slept well!!🌞";
+        // // else if (hours === 8) greeting = "Enjoy your breakfast luu~~ 上班加油!!😺";
+        // // else if (hours >= 9 && hours < 11) greeting = "Ooo 抓到在摸鱼了 hehe! Jiayouuu!🐠";
+        // // else if (hours === 11) greeting = "再坚持一下下, can eat lunch liaooo!!🤤";
+        // // else if (hours >= 12 && hours < 14) greeting = "Enjoy your meal!! Take a short nap luu😪";
+        // // else if (hours >= 14 && hours < 16) greeting = "Eat liao, rest liaoo! 上班加油luu!😄";
+        // // else if (hours === 16) greeting = "再坚持一下下, almost off work!😆";
+        // // else if (hours === 17 || (hours === 18 && minutes <= 20)) greeting = "Yayyy!! off work luu! 路上小心!😬";
+        // // else if (hours >= 18 && hours < 20) greeting = "Enjoy ur dinner lu!! Eat more!😋";
+        // // else if (hours >= 20 && hours < 21) greeting = "Enjoy your me-time!😌";
+        // // else if (hours >= 21 && hours < 22) greeting = "Need to prepare for bed liaoo!🥱";
+        // // else if (hours === 22 && minutes <= 30) greeting = "Late liaoo! Don't play phone dy heh!😛";
+        // // else if (hours > 22 || hours < 6) greeting = "Good night!! Sweet dreams!🌛 Rest well! 😴";
+        // if (hours >= 1 && hours < 23) greeting = "nothing here yet.. come back later..?🫣";
+        // else greeting = "nothing here yet.. come back later..?🫣";
 
-        document.getElementById('greeting-text').textContent = greeting;
+        // document.getElementById('greeting-text').textContent = greeting;
     }
 
     setInterval(updateMalaysiaTime, 1000);
     updateMalaysiaTime();
+
+// ---------- Auto-update Greeting/PS ----------
+async function fetchMessages() {
+    try {
+        const res = await fetch("/current_messages");
+        const data = await res.json();
+        if (data.greeting) document.getElementById("greeting-text").textContent = data.greeting;
+        if (data.ps) document.querySelector(".ps-container").innerHTML = 
+            '<span class="ps-label">ps.</span> ' + data.ps;
+    } catch (err) { console.error("Failed to fetch messages:", err); }
+}
+setInterval(fetchMessages, 10000); // fetch every 15 seconds
+fetchMessages();
 </script>
 
 </body>
