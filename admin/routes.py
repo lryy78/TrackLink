@@ -199,3 +199,63 @@ def edit_message(msg_id):
             flash(f"Update failed: {e}", "error")
 
     return render_template("create_message.html", message=message, edit_mode=True)
+
+# ---------------- Landing Preview (Admin Only) ----------------
+@admin_bp.route("/landing-preview")
+def landing_preview():
+    if not session.get("admin_logged_in"):
+        return redirect(url_for("admin.admin_login"))
+
+    # Import here to avoid circular import
+    from landing.routes import get_landing_messages
+
+    greeting_text, ps_text = get_landing_messages()
+
+    return render_template(
+        "landing.html",
+        greeting_text=greeting_text,
+        ps_text=ps_text,
+        birthday_verified=True,   # force unlocked
+        admin_preview=True,       # special flag
+        error=None
+    )
+
+# ---------------- Visit Cleanup Utility ----------------
+@admin_bp.route("/cleanup/visits", methods=["GET"])
+def visit_cleanup_list():
+    if not session.get("admin_logged_in"):
+        return redirect(url_for("admin.admin_login"))
+
+    try:
+        # Get counts of unique user agents to see which ones are "junk"
+        resp = supabase.table("visits").select("user_agent").execute()
+        agents = {}
+        for row in (resp.data or []):
+            ua = row.get("user_agent") or "Empty / None"
+            agents[ua] = agents.get(ua, 0) + 1
+        
+        # Sort by count descending
+        sorted_agents = sorted(agents.items(), key=lambda x: x[1], reverse=True)
+    except Exception as e:
+        flash(f"Error fetching agents: {e}", "error")
+        sorted_agents = []
+
+    return render_template("cleanup_visits.html", agents=sorted_agents)
+
+@admin_bp.route("/cleanup/visits/delete", methods=["POST"])
+def delete_by_agent():
+    if not session.get("admin_logged_in"):
+        return redirect(url_for("admin.admin_login"))
+
+    ua_to_delete = request.form.get("user_agent")
+    
+    # Handle the 'Empty' case logic
+    target_ua = "" if ua_to_delete == "Empty / None" else ua_to_delete
+
+    try:
+        supabase.table("visits").delete().eq("user_agent", target_ua).execute()
+        flash(f"Successfully deleted all records for agent: '{ua_to_delete}'", "success")
+    except Exception as e:
+        flash(f"Delete failed: {e}", "error")
+
+    return redirect(url_for("admin.visit_cleanup_list"))

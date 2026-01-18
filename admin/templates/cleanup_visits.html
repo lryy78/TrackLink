@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+{% block title %}Cleanup Visits{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <header class="table-header">
+        <div class="header-left">
+            <a class="breadcrumb-back" href="{{ url_for('admin.dashboard') }}">← Dashboard</a>
+            <h1>Visit Data Cleanup</h1>
+            <p>Delete records by User Agent to clean up bot traffic.</p>
+        </div>
+    </header>
+
+    <div class="glass-card" style="margin-top: 20px; padding: 20px; overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; color: white;">
+            <thead>
+                <tr style="border-bottom: 1px solid var(--border); text-align: left;">
+                    <th style="padding: 15px;">User Agent String</th>
+                    <th style="padding: 15px;">Count</th>
+                    <th style="padding: 15px; text-align: right;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for agent, count in agents %}
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <td style="padding: 15px; font-family: monospace; font-size: 0.85rem; max-width: 400px; word-break: break-all;">
+                        {{ agent }}
+                    </td>
+                    <td style="padding: 15px;">{{ count }}</td>
+                    <td style="padding: 15px; text-align: right;">
+                        <button type="button" class="delete-btn" onclick="openDeleteModal('{{ agent }}', '{{ count }}')">
+                            Delete All
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div id="deleteModal" class="modal-overlay">
+    <div class="modal-content glass-card">
+        <div class="modal-icon">⚠️</div>
+        <h2>Confirm Deletion</h2>
+        <p>You are about to delete <strong id="modal-count">0</strong> records associated with:</p>
+        <div id="modal-agent-name" class="agent-display"></div>
+        <p style="color: #ff4d4d; font-size: 0.8rem; margin-top: 10px;">This action cannot be undone.</p>
+        
+        <form id="deleteForm" action="{{ url_for('admin.delete_by_agent') }}" method="POST">
+            <input type="hidden" name="user_agent" id="modal-agent-input">
+            <div class="modal-actions">
+                <button type="button" class="btn-cancel" onclick="closeDeleteModal()">Cancel</button>
+                <button type="submit" class="btn-confirm">Yes, Delete All</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+/* Modal Overlay */
+.modal-overlay {
+    display: none; /* Hidden by default */
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(8px);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Modal Box */
+.modal-content {
+    max-width: 450px;
+    width: 90%;
+    padding: 40px;
+    text-align: center;
+    border: 1px solid rgba(255, 77, 77, 0.3);
+    animation: modalSlideUp 0.3s ease-out;
+}
+
+.modal-icon { font-size: 3rem; margin-bottom: 15px; }
+
+.agent-display {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 10px;
+    border-radius: 8px;
+    font-family: monospace;
+    font-size: 0.8rem;
+    margin: 15px 0;
+    word-break: break-all;
+    color: var(--accent);
+}
+
+.modal-actions {
+    display: flex;
+    gap: 15px;
+    margin-top: 30px;
+}
+
+.btn-cancel, .btn-confirm {
+    flex: 1;
+    padding: 12px;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.2s;
+    border: none;
+}
+
+.btn-cancel {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.btn-confirm {
+    background: #ff4d4d;
+    color: white;
+}
+
+.btn-confirm:hover { background: #ff2a2a; transform: translateY(-2px); }
+.btn-cancel:hover { background: rgba(255, 255, 255, 0.2); }
+
+@keyframes modalSlideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+/* Existing Delete Button */
+.delete-btn {
+    background: rgba(255, 77, 77, 0.1);
+    border: 1px solid rgba(255, 77, 77, 0.4);
+    color: #ff4d4d;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: 0.2s;
+}
+.delete-btn:hover { background: #ff4d4d; color: white; }
+</style>
+
+<script>
+const modal = document.getElementById('deleteModal');
+
+function openDeleteModal(agent, count) {
+    document.getElementById('modal-count').textContent = count;
+    document.getElementById('modal-agent-name').textContent = agent;
+    document.getElementById('modal-agent-input').value = agent;
+    modal.style.display = 'flex';
+}
+
+function closeDeleteModal() {
+    modal.style.display = 'none';
+}
+
+// Close if clicking outside the card
+window.onclick = function(event) {
+    if (event.target == modal) {
+        closeDeleteModal();
+    }
+}
+</script>
+{% endblock %}

@@ -2,76 +2,185 @@
 {% block title %}{{ table_name }} - {{ db_name }}{% endblock %}
 
 {% block content %}
-<h2 style="text-align:center; margin-bottom:20px;">Table: {{ table_name }} ({{ db_name }})</h2>
+<div class="admin-view-wrapper">
+    <header class="table-header">
+        <div class="header-left">
+            <a class="breadcrumb-back" href="{{ url_for('admin.dashboard') }}">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                Dashboard
+            </a>
+            <h1>{{ table_name }} <span class="db-tag">{{ db_name }}</span></h1>
+        </div>
+        <div class="header-right">
+            <small>{{ rows|length }} records shown</small>
+        </div>
+    </header>
 
-<div class="table-container">
-    <table>
-        <thead>
-            <tr>
-                {% for col in columns %}
-                <th>{{ col }}</th>
-                {% endfor %}
-            </tr>
-        </thead>
-        <tbody>
-            {% for row in rows %}
-            <tr>
-                {% for col in columns %}
-                <td>{{ row[col] }}</td>
-                {% endfor %}
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-
-<div style="text-align:center; margin-top:20px;">
-    <a class="back-btn" href="{{ url_for('admin.dashboard') }}">← Back to Dashboard</a>
+    <div class="glass-table-container">
+        <div class="table-scroll-area">
+            <table>
+                <thead>
+                    <tr>
+                        {% for col in columns %}
+                        <th>{{ col }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in rows %}
+                    <tr>
+                        {% for col in columns %}
+                        <td>
+                            <div class="cell-content" onclick="toggleExpand(this)">
+                                {{ row[col] }}
+                            </div>
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 
 <style>
-.table-container {
-    max-width: 100%;
-    overflow-x: auto;
+/* Layout Wrapper */
+.admin-view-wrapper {
+    max-width: 95%;
+    margin: 40px auto;
+    padding-bottom: 50px;
 }
 
+/* Header Styling */
+.table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.breadcrumb-back {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin-bottom: 10px;
+}
+
+.table-header h1 {
+    margin: 0;
+    font-size: 1.8rem;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.db-tag {
+    font-size: 0.7rem;
+    background: rgba(0, 210, 255, 0.1);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    padding: 4px 10px;
+    border-radius: 50px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Glass Table Container */
+.glass-table-container {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    overflow: hidden; /* Clips the internal table corners */
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.table-scroll-area {
+    overflow-x: auto;
+    width: 100%;
+}
+
+/* Custom Scrollbar for the table */
+.table-scroll-area::-webkit-scrollbar {
+    height: 8px;
+}
+.table-scroll-area::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.02);
+}
+.table-scroll-area::-webkit-scrollbar-thumb {
+    background: rgba(0, 210, 255, 0.3);
+    border-radius: 10px;
+}
+
+/* Table Elements */
 table {
     width: 100%;
     border-collapse: collapse;
-    margin: 0 auto;
-    font-family: Arial, sans-serif;
-    background: rgba(255,255,255,0.05);
-}
-
-th, td {
-    padding: 10px;
-    border: 1px solid rgba(255,255,255,0.3);
-    text-align: left;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.8);
 }
 
 th {
-    background-color: rgba(0,210,255,0.2);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--accent);
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+    padding: 16px 20px;
+    text-align: left;
+    white-space: nowrap;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.05);
     position: sticky;
     top: 0;
-    z-index: 2;
+    z-index: 10;
 }
 
-tbody tr:nth-child(even) {
-    background-color: rgba(255,255,255,0.03);
+td {
+    padding: 0; /* Let the div inside handle padding */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    vertical-align: top;
 }
 
-tbody tr:hover {
-    background-color: rgba(0,210,255,0.1);
+/* Handle Long Data */
+.cell-content {
+    padding: 14px 20px;
+    max-width: 300px; /* Limits width so table doesn't get crazy wide */
+    min-width: 120px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis; /* Adds "..." to long text */
+    transition: all 0.2s ease;
+    cursor: pointer;
 }
 
-.back-btn {
-    text-decoration: none;
-    font-weight: bold;
-    color: #00d2ff;
+/* When clicking a cell to expand it */
+.cell-content.expanded {
+    max-width: 600px;
+    white-space: normal; /* Wraps text */
+    word-break: break-all;
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
 }
 
-.back-btn:hover {
-    text-decoration: underline;
+tr:hover {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+tr:last-child td {
+    border-bottom: none;
 }
 </style>
+
+<script>
+    function toggleExpand(element) {
+        // Toggle the 'expanded' class on click to view full text
+        element.classList.toggle('expanded');
+    }
+</script>
 {% endblock %}

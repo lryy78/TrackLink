@@ -338,9 +338,86 @@
         0%, 95%, 100% { transform: scaleY(1); }
         97% { transform: scaleY(0.1); }
     }
+
+
+    /* Admin Preview Floating Button */
+    .admin-preview-overlay {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        z-index: 9999; /* Ensure it stays above everything */
+    }
+
+    .admin-back-btn {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 20px;
+        background: rgba(10, 31, 68, 0.6); /* Match your landing theme */
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        border: 1px solid rgba(0, 210, 255, 0.3); /* Subtle accent glow */
+        border-radius: 50px;
+        color: #00d2ff; /* Your var(--accent) color */
+        text-decoration: none;
+        font-weight: 700;
+        font-size: 0.9rem;
+        letter-spacing: 0.5px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .admin-back-btn:hover {
+        background: rgba(0, 210, 255, 0.15);
+        border-color: #00d2ff;
+        transform: translateY(-2px);
+        box-shadow: 0 15px 40px rgba(0, 210, 255, 0.2);
+        color: white;
+    }
+
+    .admin-back-btn svg {
+        transition: transform 0.3s ease;
+    }
+
+    .admin-back-btn:hover svg {
+        transform: scale(1.1);
+    }
+
+    /* Optional: Mobile adjustment */
+    @media (max-width: 600px) {
+        .admin-preview-overlay {
+            top: 10px;
+            left: 10px;
+        }
+        .admin-back-btn span {
+            display: none; /* Icon only on small screens to save space */
+        }
+        .admin-back-btn {
+            padding: 12px;
+        }
+    }
+
 </style>
 </head>
 <body>
+
+    {% if admin_preview %}
+    <div class="admin-preview-overlay">
+        <a href="{{ url_for('admin.dashboard') }}" class="admin-back-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+            </svg>
+            <span>Exit Preview</span>
+        </a>
+    </div>
+    {% endif %}
+
+    {% if admin_preview %}
+    <div class="admin-back">
+        <a href="{{ url_for('admin.dashboard') }}">⬅ Back to Dashboard</a>
+    </div>
+    {% endif %}
 
     <h1>Something is forming</h1>
     <div class="subtitle">haha hello..?</div>
@@ -396,8 +473,9 @@
     </div>
 
 <script>
-    const birthdayVerified = {{ 'true' if birthday_verified else 'false' }};
+    const ADMIN_PREVIEW = {{ 'true' if admin_preview else 'false' }};
 </script>
+
 
 <script>
     // --- LOGIN & TIMEOUT LOGIC ---
@@ -419,6 +497,11 @@
     }
 
     function checkSession() {
+
+        if (ADMIN_PREVIEW) {
+            overlay.style.display = "none";
+            return;
+        }
         const loginTimestamp = localStorage.getItem("loginTime");
         const now = Date.now();
 
@@ -434,35 +517,37 @@
         }
     }
 
-    form.addEventListener("submit", (e) => {
-        e.preventDefault();
-        const birthday = input.value.trim();
+    if(!ADMIN_PREVIEW){
+        form.addEventListener("submit", (e) => {
+            e.preventDefault();
+            const birthday = input.value.trim();
 
-        // Send to server for verification
-        fetch("/", {
-            method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: `birthday=${encodeURIComponent(birthday)}`
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                localStorage.setItem("loginTime", Date.now().toString());
-                overlay.style.display = "none";
-            } else {
+            // Send to server for verification
+            fetch("/", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: `birthday=${encodeURIComponent(birthday)}`
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    localStorage.setItem("loginTime", Date.now().toString());
+                    overlay.style.display = "none";
+                } else {
+                    overlay.style.display = "flex";
+                    input.value = "";
+                    const errorBox = document.getElementById("error-text");
+                    errorBox.style.display = "block";
+                    errorBox.textContent = data.error || "Invalid birthday, try again.";
+                }
+            })
+            .catch(() => {
+                // fallback on error
                 overlay.style.display = "flex";
                 input.value = "";
-                const errorBox = document.getElementById("error-text");
-                errorBox.style.display = "block";
-                errorBox.textContent = data.error || "Invalid birthday, try again.";
-            }
-        })
-        .catch(() => {
-            // fallback on error
-            overlay.style.display = "flex";
-            input.value = "";
+            });
         });
-    });
+    }
 
     checkSession();
     setInterval(checkSession, 1000);

@@ -57,6 +57,9 @@ def get_landing_messages():
 def landing():
     birthday_verified = False
     error = None
+    
+    admin_preview = request.args.get("admin_preview") == "1"
+
     greeting_text, ps_text = get_landing_messages()
 
     if request.method == "POST":
@@ -69,7 +72,9 @@ def landing():
             log_visit("landing-failed", birthday)
         return {"success": birthday_verified, "error": error}
     
-    log_visit("landing")
+    if not admin_preview:
+        log_visit("landing")
+        
     return render_template(
         "landing.html",
         birthday_verified=birthday_verified,
