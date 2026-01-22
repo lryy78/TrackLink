@@ -397,6 +397,24 @@
         }
     }
 
+    .enter-chronicle-btn {
+        margin-top: 15px;
+        padding: 12px 25px;
+        background: rgba(0, 210, 255, 0.1);
+        border: 1px solid var(--accent-blue);
+        color: var(--accent-blue);
+        border-radius: 50px;
+        text-decoration: none;
+        font-size: 0.9rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    .enter-chronicle-btn:hover {
+        background: var(--accent-blue);
+        color: #020b1a;
+        box-shadow: 0 0 20px rgba(0, 210, 255, 0.4);
+    }
+
 </style>
 </head>
 <body>
@@ -456,6 +474,16 @@
         </div>
         
         <div class="greeting" id="greeting-text">{{ greeting_text }}</div>
+        
+        {% if admin_preview %}
+            <a href="{{ url_for('admin.chronicle_preview') }}" class="enter-chronicle-btn">
+                View Feeds Hub ➜
+            </a>
+        {% else %}
+            <a href="{{ url_for('landing.chronicle') }}" class="enter-chronicle-btn">
+                View Feeds Hub ➜
+            </a>
+        {% endif %}
 
         <div class="ps-container">
             <span class="ps-label">ps.</span> 

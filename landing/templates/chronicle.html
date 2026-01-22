@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feeds Hub</title>
+    <style>
+        :root {
+            --accent-blue: #00d2ff;
+            --bg-dark: #020b1a;
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-heavy: rgba(255, 255, 255, 0.07);
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            margin: 0;
+            background-color: var(--bg-dark);
+            color: white;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(circle at 50% 50%, #0a192f 0%, #020b1a 100%);
+            overflow: hidden;
+        }
+
+        .main-container {
+            width: 90%;
+            max-width: 500px;
+            height: 85vh;
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 32px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .preview-mode-banner {
+            background: rgba(255, 77, 77, 0.2);
+            color: #ff4d4d;
+            font-size: 0.6rem;
+            font-weight: 800;
+            text-align: center;
+            padding: 6px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            border-bottom: 1px solid rgba(255, 77, 77, 0.2);
+        }
+
+        .chronicle-header {
+            padding: 20px 25px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255, 255, 255, 0.02);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .back-link {
+            color: rgba(255, 255, 255, 0.5);
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .back-link:hover { color: var(--accent-blue); }
+
+        .header-title h2 {
+            margin: 0;
+            font-size: 1rem;
+            letter-spacing: 2px;
+            font-weight: 800;
+            background: linear-gradient(to right, #fff, var(--accent-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .chat-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border) transparent;
+        }
+
+        .chat-area::-webkit-scrollbar { width: 4px; }
+        .chat-area::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+
+        .bubble {
+            max-width: 90%;
+            align-self: flex-start;
+            background: var(--glass-heavy);
+            border: 1px solid var(--border);
+            padding: 16px;
+            border-radius: 20px 20px 20px 4px;
+            animation: fadeIn 0.4s ease-out;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .media-box { 
+            width: 100%; 
+            border-radius: 12px; 
+            margin-bottom: 12px; 
+            overflow: hidden; 
+            background: #000;
+            cursor: pointer; /* Suggest it's clickable */
+        }
+        .media-box img, .media-box video { 
+            width: 100%; 
+            display: block; 
+            transition: 0.3s;
+        }
+
+        .post-text { 
+            margin: 0; 
+            font-size: 0.92rem; 
+            line-height: 1.6; 
+            color: rgba(255, 255, 255, 0.9); 
+            font-weight: 400;
+        }
+
+        .post-time { 
+            font-size: 0.65rem; 
+            color: rgba(255, 255, 255, 0.3); 
+            display: block; 
+            margin-top: 10px; 
+            font-family: monospace; 
+            text-transform: uppercase;
+        }
+
+        /* LIGHTBOX FOR IMAGES */
+        #lightbox {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(10px);
+        }
+        #lightbox img {
+            max-width: 90%;
+            max-height: 80%;
+            border-radius: 8px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+        }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            margin-top: 40%;
+            opacity: 0.6;
+        }
+
+        /* The Scanning Circle */
+        .scanner-circle {
+            width: 60px;
+            height: 60px;
+            border: 2px solid var(--accent-blue);
+            border-radius: 50%;
+            position: relative;
+            margin-bottom: 20px;
+            animation: pulse 2s infinite ease-in-out;
+        }
+
+        .scanner-circle::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100%;
+            height: 2px;
+            background: var(--accent-blue);
+            transform: translate(-50%, -50%);
+            animation: rotate 3s linear infinite;
+        }
+
+        .scanning-text {
+            font-family: monospace;
+            font-size: 0.75rem;
+            letter-spacing: 3px;
+            color: var(--accent-blue);
+            text-transform: uppercase;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.9); opacity: 0.2; box-shadow: 0 0 0 0 rgba(0, 210, 255, 0.4); }
+            50% { transform: scale(1); opacity: 0.8; box-shadow: 0 0 20px 5px rgba(0, 210, 255, 0.2); }
+            100% { transform: scale(0.9); opacity: 0.2; box-shadow: 0 0 0 0 rgba(0, 210, 255, 0); }
+        }
+
+        @keyframes rotate {
+            from { transform: translate(-50%, -50%) rotate(0deg); }
+            to { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+            </style>
+</head>
+<body>
+
+<div id="lightbox" onclick="this.style.display='none'">
+    <img id="lightboxImg" src="">
+</div>
+
+<div class="main-container">
+    {% if admin_preview %}
+    <div class="preview-mode-banner">Admin Preview Mode</div>
+    {% endif %}
+
+    <header class="chronicle-header">
+        {% if admin_preview %}
+            {% if source == 'dashboard' %}
+                <a href="{{ url_for('admin.dashboard') }}" class="back-link">
+                    <span>✕</span> Close
+                </a>
+            {% else %}
+                <a href="{{ url_for('admin.landing_preview') }}" class="back-link">
+                    <span>✕</span> Close
+                </a>
+            {% endif %}
+        {% else %}
+            <a href="{{ url_for('landing.landing') }}" class="back-link">
+                <span>✕</span> Close
+            </a>
+        {% endif %}
+        <div class="header-title"><h2>FEEDS</h2></div>
+        <div style="width: 45px;"></div>
+    </header>
+
+    <div class="chat-area" id="chatArea">    
+        {% if not posts %}
+            <div class="empty-state">
+                <div class="scanner-circle"></div>
+                <div class="scanning-text">Searching for Signal...</div>
+                <div style="font-size: 0.6rem; color: rgba(189, 241, 59, 0.774); margin-top: 10px;">
+                    No feeds found yet.
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    const chatArea = document.getElementById('chatArea');
+    const lightbox = document.getElementById('lightbox');
+    const lightboxImg = document.getElementById('lightboxImg');
+    const ADMIN_PREVIEW = {{ 'true' if admin_preview else 'false' }};
+    const LOCK_TIME_MS = 10 * 60 * 1000;
+    let lastPostCount = 0;
+
+    // --- SESSION CHECK ---
+    function checkSession() {
+        if (ADMIN_PREVIEW) return; 
+        const loginTimestamp = localStorage.getItem("loginTime");
+        if (!loginTimestamp || (Date.now() - parseInt(loginTimestamp, 10) >= LOCK_TIME_MS)) {
+            localStorage.removeItem("loginTime");
+            window.location.href = "{{ url_for('landing.landing') }}";
+        }
+    }
+
+    // --- TRACKING ---
+    async function trackInteraction(action, target) {
+        if (ADMIN_PREVIEW) return;
+        const cleanTarget = target.split('/').pop().split('?')[0];
+        try {
+            await fetch('/api/track-click', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: action, target: cleanTarget})
+            });
+        } catch (err) { console.error("Tracking error:", err); }
+    }
+
+    // --- INTERACTION LOGIC ---
+    chatArea.addEventListener('click', (e) => {
+        // IMAGE/ZOOM CLICK
+        if (e.target.tagName === 'IMG') {
+            lightboxImg.src = e.target.src;
+            lightbox.style.display = 'flex';
+            trackInteraction('zoom-image', e.target.src);
+        }
+    }, true); // Use capture phase
+
+    // VIDEO PLAY DETECTION (Handles the play button specifically)
+    chatArea.addEventListener('play', (e) => {
+        if (e.target.tagName === 'VIDEO') {
+            const videoSrc = e.target.querySelector('source') ? e.target.querySelector('source').src : e.target.src;
+            trackInteraction('play-video', videoSrc);
+        }
+    }, true); // Use capture phase because 'play' does not bubble
+
+    // SPOTIFY BLUR DETECTION
+    window.addEventListener('blur', () => {
+        const activeEl = document.activeElement;
+        if (activeEl.tagName === 'IFRAME' && activeEl.dataset.spotifyId) {
+            trackInteraction('play-spotify', activeEl.dataset.spotifyId);
+        }
+    });
+
+    // --- RENDER & UPDATE ---
+    async function updateChronicle() {
+        try {
+            const response = await fetch('/api/chronicle-updates');
+            const data = await response.json();
+            if (data.success && data.posts.length !== lastPostCount) {
+                renderPosts(data.posts);
+                lastPostCount = data.posts.length;
+                setTimeout(() => {
+                    chatArea.scrollTo({ top: chatArea.scrollHeight, behavior: 'smooth' });
+                }, 100);
+            }
+        } catch (err) { console.error("Feed error:", err); }
+    }
+
+    function handleSpotifyClick(overlay, url) {
+        // 1. Track the specific song immediately
+        trackInteraction('play-spotify', url);
+        
+        // 2. Remove the overlay so the user can interact with the actual Spotify play button
+        overlay.style.pointerEvents = 'none'; 
+        overlay.style.display = 'none';
+        
+        console.log("Spotify interaction captured for: " + url);
+    }
+
+    function renderPosts(posts) {
+        if (posts.length === 0) {
+            chatArea.innerHTML = '<div style="text-align:center; opacity:0.3; margin-top:40%;">No posts yet...</div>';
+            return;
+        }
+
+        chatArea.innerHTML = posts.map(post => {
+            let mediaHtml = '';
+            if (post.media_type === 'image') {
+                mediaHtml = `<div class="media-box"><img src="${post.media_url}" loading="lazy"></div>`;
+            } else if (post.media_type === 'video') {
+                mediaHtml = `<div class="media-box"><video controls preload="metadata"><source src="${post.media_url}"></video></div>`;
+            } else if (post.media_type === 'spotify') {
+                mediaHtml = `
+                <div class="media-box spotify-container" style="position: relative;">
+                    <div class="spotify-overlay" 
+                        onclick="handleSpotifyClick(this, '${post.media_url}')"
+                        style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; cursor: pointer;">
+                    </div>
+                    <iframe 
+                        src="${post.media_url}" 
+                        width="100%" height="152" 
+                        frameBorder="0" 
+                        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
+                        style="border-radius:12px; position: relative; z-index: 5;"
+                        loading="lazy">
+                    </iframe>
+                </div>`;
+            }
+
+            return `
+                <div class="bubble">
+                    ${mediaHtml}
+                    ${post.content ? `<p class="post-text">${post.content}</p>` : ''}
+                    <span class="post-time">${post.created_at.substring(0, 10)}</span>
+                </div>
+            `;
+        }).join('');
+    }
+
+    setInterval(checkSession, 1000);
+    setInterval(updateChronicle, 5000);
+    checkSession();
+    updateChronicle();
+</script>
+
+</body>
+</html>

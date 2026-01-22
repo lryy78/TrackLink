@@ -68,6 +68,8 @@ def view_table(db_name, table_name):
             query = query.order("created_at", desc=True)
         elif table_name == "visits":
             query = query.order("visit_time", desc=True)
+        elif table_name == "chronicle_posts":
+            query = query.order("created_at", desc=True)
         else:
             query = query.order("id", desc=True)
 
@@ -259,3 +261,176 @@ def delete_by_agent():
         flash(f"Delete failed: {e}", "error")
 
     return redirect(url_for("admin.visit_cleanup_list"))
+
+@admin_bp.route("/chronicle/create", methods=["GET", "POST"])
+def create_chronicle_post():
+    if not session.get("admin_logged_in"):
+        return redirect(url_for("admin.admin_login"))
+
+    if request.method == "POST":
+        content = request.form.get("content")
+        media_type = request.form.get("media_type")
+        media_url = ""
+
+        try:
+            # --- Handling File Uploads (Image/Video) ---
+            if media_type in ['image', 'video']:
+                file = request.files.get('file')
+                if file and file.filename != '':
+                    file_extension = file.filename.rsplit('.', 1)[-1]
+                    unique_name = f"{uuid.uuid4()}.{file_extension}"
+                    file_path = f"uploads/{unique_name}"
+                    
+                    file_content = file.read()
+                    
+                    # Upload to Supabase Storage
+                    upload_resp = supabase.storage.from_("chronicle").upload(
+                        path=file_path, 
+                        file=file_content, 
+                        file_options={"content-type": file.content_type}
+                    )
+                    
+                    # Get the Public URL
+                    media_url = supabase.storage.from_("chronicle").get_public_url(file_path)
+                else:
+                    flash("No file selected for upload!", "error")
+                    return redirect(request.url)
+
+            # --- Handling Spotify Links ---
+            elif media_type == 'spotify':
+                raw_url = request.form.get("spotify_url")
+                if "track/" in raw_url:
+                    # Extracts the ID from the link and creates an embed URL
+                    track_id = raw_url.split("track/")[1].split("?")[0]
+                    media_url = f"https://open.spotify.com/embed/track/{track_id}"
+                else:
+                    flash("Invalid Spotify link format!", "error")
+                    return redirect(request.url)
+
+            # --- Insert into Database ---
+            supabase.table("chronicle_posts").insert({
+                "content": content,
+                "media_type": media_type,
+                "media_url": media_url,
+                "is_active": True
+            }).execute()
+
+            flash("Transmission sent to Chronicle!", "success")
+            return redirect(url_for("admin.manage_chronicle")) # Redirect to manage page to see it
+
+        except Exception as e:
+            print(f"[CHRONICLE ERROR] {e}")
+            flash(f"Dispatch failed: {str(e)}", "error")
+            return redirect(request.url)
+
+    return render_template("create_chronicle.html")
+
+@admin_bp.route("/chronicle-preview")
+def chronicle_preview():
+    if not session.get("admin_logged_in"):
+        return redirect(url_for("admin.admin_login"))
+    
+    source = request.args.get("source")
+
+    # Reuse the logic to fetch posts
+    try:
+        resp = supabase.table("chronicle_posts")\
+            .select("*")\
+            .eq("is_active", True)\
+            .order("created_at", desc=False).execute()
+        posts = resp.data or []
+    except Exception as e:
+        posts = []
+
+    return render_template(
+        "chronicle.html",
+        posts=posts,
+        admin_preview=True,
+        source=source
+    )
+
+@admin_bp.route("/chronicle/manage")
+def manage_chronicle():
+    if not session.get("admin_logged_in"):
+        return redirect(url_for("admin.admin_login"))
+    
+    # Fetch all posts (including inactive ones)
+    resp = supabase.table("chronicle_posts").select("*").order("created_at", desc=True).execute()
+    return render_template("manage_chronicle.html", posts=resp.data)
+
+@admin_bp.route("/chronicle/toggle/<post_id>", methods=["POST"])
+def toggle_chronicle(post_id):
+    # 1. Get current status
+    post = supabase.table("chronicle_posts").select("is_active").eq("id", post_id).single().execute()
+    new_status = not post.data['is_active']
+    
+    # 2. Update status
+    supabase.table("chronicle_posts").update({"is_active": new_status}).eq("id", post_id).execute()
+    return redirect(url_for("admin.manage_chronicle"))
+
+@admin_bp.route("/chronicle/delete/<post_id>")
+def delete_chronicle(post_id):
+    if not session.get("admin_logged_in"):
+        return redirect(url_for("admin.admin_login"))
+
+    try:
+        # 1. Get the post data first so we know the file path
+        resp = supabase.table("chronicle_posts").select("media_url, media_type").eq("id", post_id).single().execute()
+        post = resp.data
+
+        if post and post.get("media_url") and post.get("media_type") in ['image', 'video']:
+            # 2. Extract the file path from the URL
+            # The URL looks like: .../storage/v1/object/public/chronicle/uploads/filename.jpg
+            # We need: "uploads/filename.jpg"
+            full_url = post["media_url"]
+            if "uploads/" in full_url:
+                file_path = "uploads/" + full_url.split("uploads/")[1]
+                
+                # 3. Delete from Supabase Storage
+                supabase.storage.from_("chronicle").remove([file_path])
+                print(f"Deleted file from storage: {file_path}")
+
+        # 4. Delete from Database
+        supabase.table("chronicle_posts").delete().eq("id", post_id).execute()
+        flash("Post and associated media deleted successfully.", "info")
+
+    except Exception as e:
+        print(f"Delete error: {e}")
+        flash(f"Error during deletion: {e}", "error")
+
+    return redirect(url_for("admin.manage_chronicle"))
+
+# ---------------- Edit Chronicle Post ----------------
+@admin_bp.route("/chronicle/edit/<post_id>", methods=["GET", "POST"])
+def edit_chronicle(post_id):
+    if not session.get("admin_logged_in"):
+        return redirect(url_for("admin.admin_login"))
+
+    # 1. Fetch existing post
+    resp = supabase.table("chronicle_posts").select("*").eq("id", post_id).single().execute()
+    post = resp.data
+
+    if not post:
+        flash("Post not found.", "error")
+        return redirect(url_for("admin.manage_chronicle"))
+
+    if request.method == "POST":
+        try:
+            content = request.form.get("content")
+            # Note: We usually don't allow changing media_type/file on edit 
+            # to keep it simple, but we update the text content.
+            
+            update_data = {
+                "content": content,
+                "updated_at": "now()" # Supabase handles this if you have a column, else remove
+            }
+
+            supabase.table("chronicle_posts").update(update_data).eq("id", post_id).execute()
+            flash("Chronicle updated successfully!", "success")
+            return redirect(url_for("admin.manage_chronicle"))
+
+        except Exception as e:
+            flash(f"Update failed: {e}", "error")
+
+    # Reuse create_chronicle.html but pass the post object and edit_mode flag
+    return render_template("create_chronicle.html", post=post, edit_mode=True)

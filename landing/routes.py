@@ -89,3 +89,47 @@ def current_messages():
     greeting, ps = get_landing_messages()
     return {"greeting": greeting, "ps": ps}
 
+@landing_bp.route("/chronicle")
+def chronicle():
+    # 1. Check for admin preview flag
+    admin_preview = request.args.get("admin_preview") == "1"
+
+    # 2. Fetch Chronicle data from Supabase
+    try:
+        resp = supabase.table("chronicle_posts")\
+            .select("*")\
+            .eq("is_active", True)\
+            .order("created_at", desc=False).execute()
+        posts = resp.data or []
+    except Exception as e:
+        print(f"Error fetching chronicle: {e}")
+        posts = []
+
+    # 3. Log visit only if NOT in admin preview
+    if not admin_preview:
+        log_visit("chronicle-view")
+
+    return render_template(
+        "chronicle.html",
+        posts=posts,
+        admin_preview=admin_preview
+    )
+
+@landing_bp.route("/api/chronicle-updates")
+def get_chronicle_updates():
+    # Fetch active posts, ordered by created_at (Oldest first for chat flow)
+    try:
+        resp = supabase.table("chronicle_posts")\
+            .select("*")\
+            .eq("is_active", True)\
+            .order("created_at", desc=False).execute()
+        return {"success": True, "posts": resp.data or []}
+    except Exception as e:
+        return {"success": False, "error": str(e)}, 500
+    
+@landing_bp.route("/api/track-click", methods=["POST"])
+def track_click():
+    action = request.json.get("action")
+    target = request.json.get("target") # e.g., "image", "spotify", "video"
+    log_visit(f"click-{action}", extra_info=target)
+    return {"success": True}

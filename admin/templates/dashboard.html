@@ -74,6 +74,42 @@
         <section class="db-section">
             <div class="section-title">
                 <span class="dot blue"></span>
+                <h2>Chronicle Hub</h2>
+            </div>
+            <div class="table-cards">
+                <div class="card action-card">
+                    <a href="{{ url_for('admin.create_chronicle_post') }}">
+                        <span class="table-icon">✍️</span>
+                        <span class="table-name">Create Post</span>
+                    </a>
+                </div>
+                
+                <div class="card">
+                    <a href="{{ url_for('admin.manage_chronicle') }}">
+                        <span class="table-icon">⚙️</span>
+                        <span class="table-name">Manage Posts</span>
+                    </a>
+                </div>
+
+                <div class="card">
+                    <a href="{{ url_for('admin.view_table', db_name='chat', table_name='chronicle_posts') }}">
+                        <span class="table-icon">📪</span>
+                        <span class="table-name">chronicle_posts</span>
+                    </a>
+                </div>
+
+                <div class="card">
+                    <a href="{{ url_for('admin.chronicle_preview', source='dashboard') }}">
+                        <span class="table-icon">👁️</span>
+                        <span class="table-name">Live Preview</span>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <section class="db-section">
+            <div class="section-title">
+                <span class="dot blue"></span>
                 <h2>Chat Database</h2>
             </div>
             <div class="table-cards">

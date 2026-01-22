@@ -62,7 +62,7 @@
     <nav>
         <a href="/admin/dashboard">Dashboard</a>
         <!-- <a href="/admin/messages">Manage Messages</a> -->
-        <a href="/logout" style="color: #ff8080;">Logout</a>
+        <a href="{{ url_for('admin.admin_logout') }}" style="color: #ff8080;">Logout</a>
     </nav>
     <main>
         {% block content %}{% endblock %}

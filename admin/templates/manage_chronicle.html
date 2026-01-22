@@ -1,0 +1,262 @@
+{% extends "base.html" %}
+{% block title %}Manage Chronicle{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <header class="dashboard-header">
+        <div class="header-text">
+            <h1>Manage Chronicle</h1>
+            <p>Review media and visibility in real-time.</p>
+        </div>
+        <div class="header-actions">
+            <a href="{{ url_for('admin.create_chronicle_post') }}" class="btn-preview">➕ New</a>
+            <a href="{{ url_for('admin.dashboard') }}" class="logout-link">Back</a>
+        </div>
+    </header>
+
+    <div class="glass-card table-container">
+        <table class="responsive-table">
+            <thead>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>Media</th>
+                    <th>Content</th>
+                    <th>Status</th>
+                    <th style="text-align: right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for post in posts %}
+                <tr>
+                    <td data-label="Time" class="time-cell">
+                        <span class="time-big">{{ post.created_at[11:16] }}</span>
+                        <span class="date-small">{{ post.created_at[:10] }}</span>
+                    </td>
+
+                    <td data-label="Media" class="media-cell">
+                        {% if post.media_type == 'image' %}
+                            <img src="{{ post.media_url }}" 
+                                 class="thumb clickable-media" 
+                                 onclick="openPreview('{{ post.media_url }}', 'image')"
+                                 title="Click to zoom">
+                        {% elif post.media_type == 'video' %}
+                            <div class="thumb-placeholder clickable-media" 
+                                 onclick="openPreview('{{ post.media_url }}', 'video')"
+                                 title="Click to play">
+                                🎬
+                            </div>
+                        {% elif post.media_type == 'spotify' %}
+                            <div class="spotify-wrapper">
+                                <iframe src="{{ post.media_url }}" width="100%" height="80" frameborder="0" allow="encrypted-media"></iframe>
+                            </div>
+                        {% else %}
+                            <span class="no-media">Text Only</span>
+                        {% endif %}
+                    </td>
+
+                    <td data-label="Content" class="content-cell">
+                        <div class="truncate-text">
+                            {{ post.content if post.content else "—" }}
+                        </div>
+                    </td>
+
+                    <td data-label="Status">
+                        {% if post.is_active %}
+                            <span class="status-badge active">Active</span>
+                        {% else %}
+                            <span class="status-badge hidden">Hidden</span>
+                        {% endif %}
+                    </td>
+
+                    <td class="actions-cell">
+                        <form method="POST" action="{{ url_for('admin.toggle_chronicle', post_id=post.id) }}">
+                            <button type="submit" class="action-btn-small">
+                                {{ "Hide" if post.is_active else "Show" }}
+                            </button>
+                        </form>
+                        <a href="{{ url_for('admin.delete_chronicle', post_id=post.id) }}" 
+                           onclick="return confirm('Permanent delete?')"
+                           class="delete-link">Delete</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div id="mediaModal" class="media-modal" onclick="closePreview()">
+    <span class="close-modal">&times;</span>
+    <div class="modal-content-wrapper" onclick="event.stopPropagation()">
+        <div id="modalBody"></div>
+    </div>
+</div>
+
+<style>
+    /* Modal Styles */
+    .media-modal {
+        display: none;
+        position: fixed;
+        z-index: 10000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.95);
+        backdrop-filter: blur(10px);
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-content-wrapper {
+        max-width: 90%;
+        max-height: 90vh;
+        position: relative;
+    }
+
+    .modal-content-wrapper img, 
+    .modal-content-wrapper video {
+        max-width: 100%;
+        max-height: 85vh;
+        border-radius: 12px;
+        box-shadow: 0 0 50px rgba(0,0,0,0.5);
+        border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .close-modal {
+        position: absolute;
+        top: 20px;
+        right: 30px;
+        color: white;
+        font-size: 40px;
+        font-weight: bold;
+        cursor: pointer;
+        z-index: 10001;
+    }
+
+    /* Interactive Media Styles */
+    .clickable-media {
+        cursor: zoom-in;
+        transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+
+    .clickable-media:hover {
+        transform: scale(1.1);
+        border: 2px solid var(--accent) !important;
+    }
+
+    /* Desktop Table Styles */
+    .table-container {
+        background: rgba(15, 23, 42, 0.6);
+        backdrop-filter: blur(10px);
+        border-radius: 24px;
+        border: 1px solid var(--border);
+        overflow: hidden;
+    }
+
+    .responsive-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .responsive-table th {
+        background: rgba(255,255,255,0.05);
+        color: var(--accent);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        padding: 20px;
+        letter-spacing: 1px;
+    }
+
+    .responsive-table td {
+        padding: 15px 20px;
+        border-bottom: 1px solid var(--border);
+        vertical-align: middle;
+    }
+
+    .time-big { display: block; color: white; font-family: monospace; font-size: 0.9rem; }
+    .date-small { color: rgba(255,255,255,0.4); font-size: 0.7rem; }
+    
+    .thumb { width: 50px; height: 50px; border-radius: 8px; object-fit: cover; border: 1px solid var(--border); }
+    .thumb-placeholder { width: 50px; height: 50px; border-radius: 8px; background: #000; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); font-size: 1.2rem; }
+    
+    .truncate-text { max-width: 200px; font-size: 0.85rem; color: rgba(255,255,255,0.8); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+    .status-badge { padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; border: 1px solid transparent; }
+    .status-badge.active { background: rgba(0, 255, 136, 0.1); color: #00ff88; border-color: rgba(0, 255, 136, 0.2); }
+    .status-badge.hidden { background: rgba(255, 77, 77, 0.1); color: #ff4d4d; border-color: rgba(255, 77, 77, 0.2); }
+
+    .actions-cell { display: flex; gap: 8px; justify-content: flex-end; }
+    .action-btn-small { background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: white; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-size: 0.75rem; transition: 0.2s; }
+    .action-btn-small:hover { background: var(--accent); color: #000; border-color: var(--accent); }
+    .delete-link { background: rgba(255,77,77,0.1); border: 1px solid rgba(255,77,77,0.2); color: #ff4d4d; padding: 6px 12px; border-radius: 8px; text-decoration: none; font-size: 0.75rem; }
+
+    @media (max-width: 768px) {
+        .responsive-table thead { display: none; }
+        .responsive-table tr {
+            display: block;
+            margin-bottom: 15px;
+            padding: 15px;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+        }
+        .responsive-table td {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: none;
+            padding: 8px 0;
+            text-align: right;
+        }
+        .responsive-table td::before {
+            content: attr(data-label);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.4);
+            font-weight: bold;
+        }
+        .actions-cell { 
+            margin-top: 10px; 
+            padding-top: 10px !important; 
+            border-top: 1px solid var(--border) !important; 
+            justify-content: center;
+        }
+        .truncate-text { max-width: 100%; text-align: right; }
+        .spotify-wrapper { width: 150px; }
+    }
+</style>
+
+<script>
+function openPreview(url, type) {
+    const modal = document.getElementById('mediaModal');
+    const body = document.getElementById('modalBody');
+    
+    body.innerHTML = ''; // Clear previous
+    
+    if (type === 'image') {
+        body.innerHTML = `<img src="${url}" alt="Full Preview">`;
+    } else if (type === 'video') {
+        body.innerHTML = `
+            <video controls autoplay style="width: 100%;">
+                <source src="${url}" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>`;
+    }
+    
+    modal.style.display = 'flex';
+}
+
+function closePreview() {
+    const modal = document.getElementById('mediaModal');
+    const body = document.getElementById('modalBody');
+    body.innerHTML = ''; // Stops video audio instantly
+    modal.style.display = 'none';
+}
+
+// Close on escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === "Escape") closePreview();
+});
+</script>
+{% endblock %}
